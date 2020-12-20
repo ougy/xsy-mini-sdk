@@ -1,12 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.ouguiyuan</groupId>
     <artifactId>xsy-mini-sdk</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <version>y</version>
     <description>销售易中间件的SDK</description>
     <packaging>jar</packaging>
 
@@ -31,7 +29,7 @@
         <connection>scm:git:https://github.com/ougy/xsy-mini-sdk</connection>
         <developerConnection>scm:git:git@github.com/ougy/xsy-mini-sdk.git</developerConnection>
         <url>https://github.com/ougy/xsy-mini-sdk</url>
-        <tag>HEAD</tag>
+        <tag>y</tag>
     </scm>
 
     <properties>
