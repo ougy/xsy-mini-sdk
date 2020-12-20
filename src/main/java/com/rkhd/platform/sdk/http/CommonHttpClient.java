@@ -40,8 +40,8 @@ public class CommonHttpClient {
     private CloseableHttpClient client;
     private String contentEncoding = "UTF-8";
     private String contentType = "application/json";
-    private int socketTimeout = 30000;
-    private int connectionTimeout = 30000;
+    private int socketTimeout = 60000;
+    private int connectionTimeout = 60000;
     private RequestConfig config;
 
     @Deprecated
