@@ -15,8 +15,8 @@ public class RkhdHttpClient {
     private CommonHttpClient client;
     private String contentEncoding = "UTF-8";
     private String contentType = "application/json";
-    private int socketTimeout = 100000;
-    private int connectionTimeout = 100000;
+    private int socketTimeout = 1200000;
+    private int connectionTimeout = 1200000;
 
     private String userName;
     private String password;
