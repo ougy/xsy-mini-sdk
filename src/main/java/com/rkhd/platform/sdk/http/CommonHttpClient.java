@@ -1,8 +1,8 @@
 package com.rkhd.platform.sdk.http;
 
-import com.rkhd.platform.sdk.util.IOUtil;
 import com.rkhd.platform.sdk.exception.XsyHttpException;
 import com.rkhd.platform.sdk.http.handler.ResponseBodyHandler;
+import com.rkhd.platform.sdk.util.IOUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
@@ -40,12 +40,42 @@ public class CommonHttpClient {
     private CloseableHttpClient client;
     private String contentEncoding = "UTF-8";
     private String contentType = "application/json";
-    private int socketTimeout = 120000;
-    private int connectionTimeout = 120000;
+    private int socketTimeout = 60000;
+    private int connectionTimeout = 60000;
     private RequestConfig config;
 
     @Deprecated
     public CommonHttpClient() {
+        createClientWithoutSSL();
+    }
+
+    @Deprecated
+    public CommonHttpClient(int socketTimeout) throws IOException {
+        this.socketTimeout = socketTimeout;
+        createClientWithoutSSL();
+    }
+
+    @Deprecated
+    public CommonHttpClient(int socketTimeout, int connectionTimeout) throws IOException {
+        this.socketTimeout = socketTimeout;
+        this.connectionTimeout = connectionTimeout;
+        createClientWithoutSSL();
+    }
+
+    @Deprecated
+    public CommonHttpClient(int socketTimeout, int connectionTimeout, String contentType) throws IOException {
+        this.socketTimeout = socketTimeout;
+        this.connectionTimeout = connectionTimeout;
+        this.contentType = contentType;
+        createClientWithoutSSL();
+    }
+
+    @Deprecated
+    public CommonHttpClient(int socketTimeout, int connectionTimeout, String contentEncoding, String contentType) throws IOException {
+        this.socketTimeout = socketTimeout;
+        this.connectionTimeout = connectionTimeout;
+        this.contentEncoding = contentEncoding;
+        this.contentType = contentType;
         createClientWithoutSSL();
     }
 

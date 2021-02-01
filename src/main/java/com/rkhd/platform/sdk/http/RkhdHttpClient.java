@@ -15,8 +15,8 @@ public class RkhdHttpClient {
     private CommonHttpClient client;
     private String contentEncoding = "UTF-8";
     private String contentType = "application/json";
-    private int socketTimeout = 1200000;
-    private int connectionTimeout = 1200000;
+    private int socketTimeout = 600000;
+    private int connectionTimeout = 600000;
 
     private String userName;
     private String password;
@@ -27,6 +27,40 @@ public class RkhdHttpClient {
 
     @Deprecated
     public RkhdHttpClient() throws IOException {
+        this.client = new CommonHttpClient();
+        constructorImpl();
+    }
+
+    @Deprecated
+    public RkhdHttpClient(int socketTimeout) throws IOException {
+        this.socketTimeout = socketTimeout;
+        this.client = new CommonHttpClient();
+        constructorImpl();
+    }
+
+    @Deprecated
+    public RkhdHttpClient(int socketTimeout, int connectionTimeout) throws IOException {
+        this.socketTimeout = socketTimeout;
+        this.connectionTimeout = connectionTimeout;
+        this.client = new CommonHttpClient();
+        constructorImpl();
+    }
+
+    @Deprecated
+    public RkhdHttpClient(int socketTimeout, int connectionTimeout, String contentEncoding) throws IOException {
+        this.socketTimeout = socketTimeout;
+        this.connectionTimeout = connectionTimeout;
+        this.contentEncoding = contentEncoding;
+        this.client = new CommonHttpClient();
+        constructorImpl();
+    }
+
+    @Deprecated
+    public RkhdHttpClient(int socketTimeout, int connectionTimeout, String contentEncoding, String contentType) throws IOException {
+        this.socketTimeout = socketTimeout;
+        this.connectionTimeout = connectionTimeout;
+        this.contentEncoding = contentEncoding;
+        this.contentType = contentType;
         this.client = new CommonHttpClient();
         constructorImpl();
     }
