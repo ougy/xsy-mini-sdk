@@ -15,8 +15,6 @@ public class RkhdHttpClient {
     private CommonHttpClient client;
     private String contentEncoding = "UTF-8";
     private String contentType = "application/json";
-    private int socketTimeout = 600000;
-    private int connectionTimeout = 600000;
 
     private String userName;
     private String password;
@@ -25,43 +23,7 @@ public class RkhdHttpClient {
     private String clientSecret;
     private String accessToken;
 
-    @Deprecated
-    public RkhdHttpClient() throws IOException {
-        this.client = new CommonHttpClient();
-        constructorImpl();
-    }
-
-    @Deprecated
-    public RkhdHttpClient(int socketTimeout) throws IOException {
-        this.socketTimeout = socketTimeout;
-        this.client = new CommonHttpClient();
-        constructorImpl();
-    }
-
-    @Deprecated
-    public RkhdHttpClient(int socketTimeout, int connectionTimeout) throws IOException {
-        this.socketTimeout = socketTimeout;
-        this.connectionTimeout = connectionTimeout;
-        this.client = new CommonHttpClient();
-        constructorImpl();
-    }
-
-    @Deprecated
-    public RkhdHttpClient(int socketTimeout, int connectionTimeout, String contentEncoding) throws IOException {
-        this.socketTimeout = socketTimeout;
-        this.connectionTimeout = connectionTimeout;
-        this.contentEncoding = contentEncoding;
-        this.client = new CommonHttpClient();
-        constructorImpl();
-    }
-
-    @Deprecated
-    public RkhdHttpClient(int socketTimeout, int connectionTimeout, String contentEncoding, String contentType) throws IOException {
-        this.socketTimeout = socketTimeout;
-        this.connectionTimeout = connectionTimeout;
-        this.contentEncoding = contentEncoding;
-        this.contentType = contentType;
-        this.client = new CommonHttpClient();
+    public RkhdHttpClient() {
         constructorImpl();
     }
 
@@ -72,8 +34,11 @@ public class RkhdHttpClient {
         this.securityCode = oauthConfig.getSecurityCode();
         this.clientId = oauthConfig.getClientId();
         this.clientSecret = oauthConfig.getClientSecret();
+
+        this.client = new CommonHttpClient(Integer.valueOf(oauthConfig.getSocketTimeout()), Integer.valueOf(oauthConfig.getConnectionTimeout()));
         this.client.setContentEncoding(this.contentEncoding);
         this.client.setContentType(this.contentType);
+
         String oauthUrl = oauthConfig.getOauthUrl() + "?grant_type=password&client_id=" + this.clientId + "&client_secret=" + this.clientSecret + "&username=" + this.userName + "&password=" + this.password + this.securityCode;
 
         CommonData commonData = new CommonData();
@@ -101,7 +66,20 @@ public class RkhdHttpClient {
         return new RkhdHttpClient();
     }
 
-    @Deprecated
+    /**
+     * 类级的内部类，也就是静态的成员式内部类，该内部类的实例与外部类的实例
+     * 没有绑定关系，而且只有被调用到才会装载，从而实现了延迟加载
+     */
+    private static class RkhdHttpClientHolder {
+        // 静态初始化器，由JVM来保证线程安全
+        private static RkhdHttpClient instance = new RkhdHttpClient();
+    }
+
+    //单例模式
+    public static RkhdHttpClient getInstance() {
+        return RkhdHttpClient.RkhdHttpClientHolder.instance;
+    }
+
     public String performRequest(RkhdHttpData data) throws IOException {
         log.info(data.toString());
         CommonData commonData = rkhdDataToCommonData(data);

@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.ouguiyuan</groupId>
     <artifactId>xsy-mini-sdk</artifactId>
-    <version>1.0-RELEASE</version>
+    <version>1.1-RELEASE</version>
     <packaging>jar</packaging>
     <name>xsy-mini-sdk</name>
     <description>This is the SDK used by the neocrm middleware</description>
@@ -36,6 +37,8 @@
 
     <properties>
         <java.version>1.8</java.version>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <maven.compiler.encoding>UTF-8</maven.compiler.encoding>
         <fastjson.version>1.2.74</fastjson.version>
         <lombok.version>1.18.12</lombok.version>
         <log4j.version>1.2.17</log4j.version>
@@ -145,51 +148,51 @@
                 </executions>
             </plugin>
             <!--部署-->
-          <!--  <plugin>
-                <artifactId>maven-deploy-plugin</artifactId>
+            <!--  <plugin>
+                  <artifactId>maven-deploy-plugin</artifactId>
+                  <executions>
+                      <execution>
+                          <id>deploy</id>
+                          <phase>deploy</phase>
+                          <goals>
+                              <goal>deploy</goal>
+                          </goals>
+                      </execution>
+                  </executions>
+              </plugin>-->
+            <!--Maven GPG插件用于使用以下配置对组件进行签名-->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-gpg-plugin</artifactId>
+                <version>1.5</version>
                 <executions>
                     <execution>
-                        <id>deploy</id>
-                        <phase>deploy</phase>
+                        <id>sign-artifacts</id>
+                        <phase>verify</phase>
                         <goals>
-                            <goal>deploy</goal>
+                            <goal>sign</goal>
                         </goals>
                     </execution>
                 </executions>
-            </plugin>-->
-            <!--Maven GPG插件用于使用以下配置对组件进行签名-->
-             <plugin>
-                 <groupId>org.apache.maven.plugins</groupId>
-                 <artifactId>maven-gpg-plugin</artifactId>
-                 <version>1.5</version>
-                 <executions>
-                     <execution>
-                         <id>sign-artifacts</id>
-                         <phase>verify</phase>
-                         <goals>
-                             <goal>sign</goal>
-                         </goals>
-                     </execution>
-                 </executions>
-             </plugin>
-             <!--staging puglin,用于自动执行发布阶段(免手动)-->
-             <plugin>
-                 <groupId>org.sonatype.plugins</groupId>
-                 <artifactId>nexus-staging-maven-plugin</artifactId>
-                 <version>1.6.7</version>
-                 <extensions>true</extensions>
-                 <configuration>
-                     <serverId>oss</serverId>
-                     <nexusUrl>https://oss.sonatype.org/</nexusUrl>
-                     <autoReleaseAfterClose>true</autoReleaseAfterClose>
-                 </configuration>
-             </plugin>
-             <!-- release plugin,用于发布到release仓库部署插件 -->
-             <plugin>
-                 <groupId>org.apache.maven.plugins</groupId>
-                 <artifactId>maven-release-plugin</artifactId>
-                 <version>2.5.3</version>
-             </plugin>
+            </plugin>
+            <!--staging puglin,用于自动执行发布阶段(免手动)-->
+            <plugin>
+                <groupId>org.sonatype.plugins</groupId>
+                <artifactId>nexus-staging-maven-plugin</artifactId>
+                <version>1.6.7</version>
+                <extensions>true</extensions>
+                <configuration>
+                    <serverId>oss</serverId>
+                    <nexusUrl>https://oss.sonatype.org/</nexusUrl>
+                    <autoReleaseAfterClose>true</autoReleaseAfterClose>
+                </configuration>
+            </plugin>
+            <!-- release plugin,用于发布到release仓库部署插件 -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-release-plugin</artifactId>
+                <version>2.5.3</version>
+            </plugin>
         </plugins>
     </build>
 

@@ -13,8 +13,6 @@ import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.*;
 import org.apache.http.conn.socket.LayeredConnectionSocketFactory;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
-import org.apache.http.conn.ssl.SSLContextBuilder;
-import org.apache.http.conn.ssl.TrustStrategy;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.entity.mime.MultipartEntityBuilder;
@@ -22,6 +20,8 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.message.BasicHeader;
 import org.apache.http.message.BasicNameValuePair;
+import org.apache.http.ssl.SSLContextBuilder;
+import org.apache.http.ssl.TrustStrategy;
 import org.apache.http.util.EntityUtils;
 
 import javax.net.ssl.SSLContext;
@@ -40,38 +40,33 @@ public class CommonHttpClient {
     private CloseableHttpClient client;
     private String contentEncoding = "UTF-8";
     private String contentType = "application/json";
-    private int socketTimeout = 60000;
-    private int connectionTimeout = 60000;
+    private int socketTimeout = 120000;
+    private int connectionTimeout = 120000;
     private RequestConfig config;
 
-    @Deprecated
     public CommonHttpClient() {
         createClientWithoutSSL();
     }
 
-    @Deprecated
-    public CommonHttpClient(int socketTimeout) throws IOException {
+    public CommonHttpClient(int socketTimeout) {
         this.socketTimeout = socketTimeout;
         createClientWithoutSSL();
     }
 
-    @Deprecated
-    public CommonHttpClient(int socketTimeout, int connectionTimeout) throws IOException {
+    public CommonHttpClient(int socketTimeout, int connectionTimeout) {
         this.socketTimeout = socketTimeout;
         this.connectionTimeout = connectionTimeout;
         createClientWithoutSSL();
     }
 
-    @Deprecated
-    public CommonHttpClient(int socketTimeout, int connectionTimeout, String contentType) throws IOException {
+    public CommonHttpClient(int socketTimeout, int connectionTimeout, String contentType) {
         this.socketTimeout = socketTimeout;
         this.connectionTimeout = connectionTimeout;
         this.contentType = contentType;
         createClientWithoutSSL();
     }
 
-    @Deprecated
-    public CommonHttpClient(int socketTimeout, int connectionTimeout, String contentEncoding, String contentType) throws IOException {
+    public CommonHttpClient(int socketTimeout, int connectionTimeout, String contentEncoding, String contentType) {
         this.socketTimeout = socketTimeout;
         this.connectionTimeout = connectionTimeout;
         this.contentEncoding = contentEncoding;
@@ -83,7 +78,20 @@ public class CommonHttpClient {
         return new CommonHttpClient();
     }
 
-    @Deprecated
+    /**
+     * 类级的内部类，也就是静态的成员式内部类，该内部类的实例与外部类的实例
+     * 没有绑定关系，而且只有被调用到才会装载，从而实现了延迟加载
+     */
+    private static class CommonHttpClientHolder {
+        // 静态初始化器，由JVM来保证线程安全
+        private static CommonHttpClient instance = new CommonHttpClient();
+    }
+
+    //单例模式
+    public static CommonHttpClient getInstance() {
+        return CommonHttpClientHolder.instance;
+    }
+
     public String performRequest(CommonData data) {
         HttpResult httpResult = execute(data);
         if (httpResult != null) {

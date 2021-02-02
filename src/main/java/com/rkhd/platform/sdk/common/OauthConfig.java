@@ -20,6 +20,8 @@ public class OauthConfig {
     private static final String CLIENT_ID = "clientId";
     private static final String CLIENT_SECRET = "clientSecret";
     public static final String DOMAIN = "domain";
+    public static final String SOCKET_TIMEOUT = "socketTimeout";
+    public static final String CONNECTION_TIMEOUT = "connectionTimeout";
     private static Properties properties = new Properties();
 
     static {
@@ -38,6 +40,8 @@ public class OauthConfig {
                     log.error("clientSecret=");
                     log.error("domain=");
                     log.error("modelJarPath=");
+                    log.error("socketTimeout=");
+                    log.error("connectionTimeout=");
                     System.exit(1);
                 }
             } catch (IOException e1) {
@@ -65,6 +69,8 @@ public class OauthConfig {
                 log.error("clientSecret=");
                 log.error("domain=");
                 log.error("modelJarPath=");
+                log.error("socketTimeout=");
+                log.error("connectionTimeout=");
                 System.exit(1);
             }
         } catch (IOException e1) {
@@ -111,6 +117,14 @@ public class OauthConfig {
 
     public static String getDomain() {
         return properties.getProperty("domain", "https://api-tencent.xiaoshouyi.com");
+    }
+
+    public static String getSocketTimeout() {
+        return properties.getProperty("socketTimeout", "120000");
+    }
+
+    public static String getConnectionTimeout() {
+        return properties.getProperty("connectionTimeout", "120000");
     }
 
     public static void loadJar(String jarPath) throws MalformedURLException {
