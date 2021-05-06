@@ -651,7 +651,7 @@ public class XObjectService {
         StringBuilder sb = new StringBuilder();
         sb.append("request: [").append(data.toString()).append("]")
                 .append(", response: ").append(result);
-        log.info(sb.toString());
+        log.debug(sb.toString());
     }
 
     private static class DecimalValueFilter implements ValueFilter {

@@ -2,6 +2,7 @@ package com.rkhd.platform.sdk.http;
 
 import com.alibaba.fastjson.JSONObject;
 import com.rkhd.platform.sdk.common.OauthConfig;
+import com.rkhd.platform.sdk.common.TokenCache;
 import com.rkhd.platform.sdk.exception.XsyHttpException;
 import com.rkhd.platform.sdk.http.handler.ResponseBodyHandler;
 import lombok.extern.slf4j.Slf4j;
@@ -38,27 +39,32 @@ public class RkhdHttpClient {
         this.client = new CommonHttpClient(Integer.valueOf(oauthConfig.getSocketTimeout()), Integer.valueOf(oauthConfig.getConnectionTimeout()));
         this.client.setContentEncoding(this.contentEncoding);
         this.client.setContentType(this.contentType);
+        String accessToken = TokenCache.getKey("accessToken");
+        if (accessToken == null) {
+            String oauthUrl = oauthConfig.getOauthUrl() + "?grant_type=password&client_id=" + this.clientId + "&client_secret=" + this.clientSecret + "&username=" + this.userName + "&password=" + this.password + this.securityCode;
 
-        String oauthUrl = oauthConfig.getOauthUrl() + "?grant_type=password&client_id=" + this.clientId + "&client_secret=" + this.clientSecret + "&username=" + this.userName + "&password=" + this.password + this.securityCode;
-
-        CommonData commonData = new CommonData();
-        commonData.setCall_type("GET");
-        commonData.setCallString(oauthUrl);
-        HttpResult result = this.client.execute(commonData);
-        if (result != null && StringUtils.isNotBlank(result.getResult())) {
-            JSONObject jsonObject = JSONObject.parseObject(result.getResult());
-            if (jsonObject.containsKey("access_token")) {
-                this.accessToken = jsonObject.getString("access_token");
-            } else {
-                if (jsonObject.containsKey("error_description")) {
-                    log.error(jsonObject.getString("error_description"));
+            CommonData commonData = new CommonData();
+            commonData.setCall_type("GET");
+            commonData.setCallString(oauthUrl);
+            HttpResult result = this.client.execute(commonData);
+            if (result != null && StringUtils.isNotBlank(result.getResult())) {
+                JSONObject jsonObject = JSONObject.parseObject(result.getResult());
+                if (jsonObject.containsKey("access_token")) {
+                    accessToken = jsonObject.getString("access_token");
+                    log.debug("从接口获取token:" + accessToken);
+                    TokenCache.setKey("accessToken", accessToken);
+                    this.accessToken = accessToken;
                 } else {
-                    log.error(jsonObject.toString());
+                    if (jsonObject.containsKey("error_description")) {
+                        log.error(jsonObject.getString("error_description"));
+                    } else {
+                        log.error(jsonObject.toString());
+                    }
+                    System.exit(1);
                 }
-                System.exit(1);
+            } else {
+                log.error("can not get the accessToken,please check your config");
             }
-        } else {
-            log.error("can not get the accessToken,please check your config");
         }
     }
 
@@ -81,13 +87,13 @@ public class RkhdHttpClient {
     }
 
     public String performRequest(RkhdHttpData data) throws IOException {
-        log.info(data.toString());
+        log.debug(data.toString());
         CommonData commonData = rkhdDataToCommonData(data);
         return this.client.performRequest(commonData);
     }
 
     public RkhdFile downFile(RkhdHttpData data) throws XsyHttpException {
-        log.info(data.toString());
+        log.debug(data.toString());
         CommonData commonData = rkhdDataToCommonData(data);
         return this.client.downFile(commonData);
     }

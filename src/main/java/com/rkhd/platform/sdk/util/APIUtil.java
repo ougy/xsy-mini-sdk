@@ -3,6 +3,7 @@ package com.rkhd.platform.sdk.util;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.rkhd.platform.sdk.common.OauthConfig;
+import com.rkhd.platform.sdk.common.TokenCache;
 import com.rkhd.platform.sdk.http.*;
 import com.rkhd.platform.sdk.model.DataModel;
 import lombok.extern.slf4j.Slf4j;
@@ -136,32 +137,37 @@ public class APIUtil {
     }
 
     public static String constructorImpl(CommonHttpClient commonHttpClient) {
-        commonHttpClient.setContentEncoding("UTF-8");
-        commonHttpClient.setContentType("application/json");
-        String oauthUrl = DOMAIN + "/oauth2/token?grant_type=password" + "&client_id=" + CLIENT_ID
-                + "&client_secret=" + CLIENT_SECRET + "&username=" + USER_NAME + "&password=" + PASSWORD
-                + SECURITY_CODE;
-        CommonData commonData = new CommonData();
-        commonData.setCall_type(HTTP_TYPE_GET);
-        commonData.setCallString(oauthUrl);
+        String accessToken = TokenCache.getKey("accessToken");
+        if (accessToken == null) {
+            commonHttpClient.setContentEncoding("UTF-8");
+            commonHttpClient.setContentType("application/json");
+            String oauthUrl = DOMAIN + "/oauth2/token?grant_type=password" + "&client_id=" + CLIENT_ID
+                    + "&client_secret=" + CLIENT_SECRET + "&username=" + USER_NAME + "&password=" + PASSWORD
+                    + SECURITY_CODE;
+            CommonData commonData = new CommonData();
+            commonData.setCall_type(HTTP_TYPE_GET);
+            commonData.setCallString(oauthUrl);
 
-        HttpResult result = commonHttpClient.execute(commonData);
-        if (result != null && StringUtils.isNotBlank(result.getResult())) {
-            JSONObject jsonObject = JSONObject.parseObject(result.getResult());
-            if (jsonObject.containsKey("access_token")) {
-                return jsonObject.getString("access_token");
-            } else {
-                if (jsonObject.containsKey("error_description")) {
-                    log.error(jsonObject.getString("error_description"));
+            HttpResult result = commonHttpClient.execute(commonData);
+            if (result != null && StringUtils.isNotBlank(result.getResult())) {
+                JSONObject jsonObject = JSONObject.parseObject(result.getResult());
+                if (jsonObject.containsKey("access_token")) {
+                    accessToken = jsonObject.getString("access_token");
+                    log.debug("从中接口获取token:" + accessToken);
+                    TokenCache.setKey("accessToken", accessToken);
                 } else {
-                    log.error(jsonObject.toString());
+                    if (jsonObject.containsKey("error_description")) {
+                        log.error(jsonObject.getString("error_description"));
+                    } else {
+                        log.error(jsonObject.toString());
+                    }
+                    System.exit(1);
                 }
-                System.exit(1);
+            } else {
+                log.error("can not get the accessToken,please check your config");
             }
-        } else {
-            log.error("can not get the accessToken,please check your config");
         }
-        return "";
+        return accessToken;
     }
 
     /**
@@ -195,7 +201,7 @@ public class APIUtil {
                 log.error(msg);
             } else {
                 jsonObject = JSONObject.parseObject(result);
-                log.info(String.format("根据SQL查询: %s，查询结果: %s", sql, result));
+                log.debug(String.format("根据SQL查询: %s，查询结果: %s", sql, result));
             }
 
             return jsonObject;
@@ -243,7 +249,7 @@ public class APIUtil {
                 log.error(msg);
             } else {
                 jsonObject = JSONObject.parseObject(result);
-                log.info(String.format("根据id查询: %s，查询结果: %s", url, result));
+                log.debug(String.format("根据id查询: %s，查询结果: %s", url, result));
             }
 
             return jsonObject;
@@ -291,7 +297,7 @@ public class APIUtil {
         }
 
         if (returnObject != null) {
-            log.info(String.format("根据SQL: %s 查询单条记录结果: %s", sql, returnObject.toString()));
+            log.debug(String.format("根据SQL: %s 查询单条记录结果: %s", sql, returnObject.toString()));
         } else {
             log.warn(String.format("根据SQL: %s 查询单条记录结果: %s", sql, "查找不到结果"));
         }
@@ -335,7 +341,7 @@ public class APIUtil {
             log.error(msg);
         } else {
             jsonObject = JSONObject.parseObject(result);
-            log.info(String.format("查询单个对象查询: %s，查询结果: %s", uri, result));
+            log.debug(String.format("查询单个对象查询: %s，查询结果: %s", uri, result));
         }
 
         return jsonObject;
@@ -372,7 +378,7 @@ public class APIUtil {
             //先查询总数量
             String soql = String.format("%s limit %s, %s", sql, start, PAGE_SIZE);
 
-            log.info(String.format("分页查询记录，查询SQL: %s", soql));
+            log.debug(String.format("分页查询记录，查询SQL: %s", soql));
 
             httpData.putFormData("q", soql);
             String result = httpClient.performRequest(httpData);
@@ -405,7 +411,7 @@ public class APIUtil {
             String urlParam = String.format("%s limit %s, %s", sql, start, PAGE_SIZE);
             String url = String.format(QUERY_URI_V2, URLEncoder.encode(urlParam, CharEncoding.UTF_8));
 
-            log.info(String.format("分页查询记录，查询路径: %s", URLDecoder.decode(url, CharEncoding.UTF_8)));
+            log.debug(String.format("分页查询记录，查询路径: %s", URLDecoder.decode(url, CharEncoding.UTF_8)));
 
             httpData.setCallString(url);
             String result = httpClient.performRequest(httpData);
@@ -483,14 +489,14 @@ public class APIUtil {
                 String.format(OBJECT_UPDATE_URI, objName);
 
         httpData.setCallString(url);
-        log.info(String.format("更新对象url: %s", url));
+        log.debug(String.format("更新对象url: %s", url));
         httpData.setBody(jsonString);
         String msg = httpClient.performRequest(httpData);
 
         if (msg.contains(ERROR_CODE)) {
             log.error(String.format("更新对象错误: %s，更新内容: %s", msg, jsonString));
         } else {
-            log.info(String.format("更新对象结果: %s，更新内容: %s", msg, jsonString));
+            log.debug(String.format("更新对象结果: %s，更新内容: %s", msg, jsonString));
         }
 
         return msg;
@@ -530,7 +536,7 @@ public class APIUtil {
 
         if (msgObject.containsKey("code") && msgObject.containsKey("msg")) {
             if (APIUtil.getInt(APIUtil.getObjectAttribute(msgObject, "code")) == 200) {
-                log.info(String.format("更新对象结果: %s，更新url: %s, 更新内容: %s",
+                log.debug(String.format("更新对象结果: %s，更新url: %s, 更新内容: %s",
                         APIUtil.getObjectAttribute(msgObject, "msg"), url, dataObject.toString()));
             } else {
                 log.error(String.format("更新对象错误: %s，更新url: %s, 更新内容: %s",
@@ -564,7 +570,7 @@ public class APIUtil {
                 String.format(OBJECT_CREATE_URI, "customize") :
                 String.format(OBJECT_CREATE_URI, objName);
 
-        log.info(String.format("新建对象url: %s", url));
+        log.debug(String.format("新建对象url: %s", url));
         httpData.setBody(jsonString);
         httpData.setCallString(url);
         String msg = httpClient.performRequest(httpData);
@@ -572,7 +578,7 @@ public class APIUtil {
         if (msg.contains(ERROR_CODE)) {
             log.error(String.format("新建自定义对象错误: %s，新建参数: %s", msg, jsonString));
         } else {
-            log.info(String.format("新建自定义对象结果: %s，新建参数: %s", msg, jsonString));
+            log.debug(String.format("新建自定义对象结果: %s，新建参数: %s", msg, jsonString));
         }
 
         return msg;
@@ -648,7 +654,7 @@ public class APIUtil {
 
         if (msgObject.containsKey("code") && msgObject.containsKey("msg")) {
             if (APIUtil.getInt(APIUtil.getObjectAttribute(msgObject, "code")) == 200) {
-                log.info(String.format("创建对象结果: %s，创建url: %s, 创建内容: %s",
+                log.debug(String.format("创建对象结果: %s，创建url: %s, 创建内容: %s",
                         APIUtil.getObjectAttribute(msgObject, "msg"), url, dataObject.toString()));
             } else {
                 log.error(String.format("创建对象错误: %s，创建url: %s, 创建内容: %s",
@@ -711,7 +717,7 @@ public class APIUtil {
 
         if (msgObject.containsKey("code") && msgObject.containsKey("msg")) {
             if (APIUtil.getInt(APIUtil.getObjectAttribute(msgObject, "code")) == 200) {
-                log.info(String.format("删除对象结果: %s，删除url: %s",
+                log.debug(String.format("删除对象结果: %s，删除url: %s",
                         APIUtil.getObjectAttribute(msgObject, "msg"), url));
             } else {
                 log.error(String.format("删除对象错误: %s，删除url: %s",
@@ -765,7 +771,7 @@ public class APIUtil {
                 String.format(OBJECT_DELETE_URI, objName) :
                 String.format(OBJECT_DELETE_URI, "customize");
 
-        log.info(String.format("删除对象url：%s", url));
+        log.debug(String.format("删除对象url：%s", url));
 
         httpData.setCall_type(HTTP_TYPE_POST);
         httpData.setCallString(url);
@@ -776,7 +782,7 @@ public class APIUtil {
         if (msg.contains(ERROR_CODE)) {
             log.error(String.format("删除对象错误: %s，对象名称: %s，对象id: %s", msg, objName, id));
         } else {
-            log.info(String.format("删除对象结果: %s，对象名称: %s，对象id: %s", msg, objName, id));
+            log.debug(String.format("删除对象结果: %s，对象名称: %s，对象id: %s", msg, objName, id));
         }
 
         return msg;
@@ -833,7 +839,7 @@ public class APIUtil {
 
             if (labelMap.containsKey(value)) {
                 String desc = labelMap.get(value);
-                log.info(String.format("查询选择型字段描述，查询对象名: %s, 查询字段: %s, 查询值: %s, 字段描述值: %s",
+                log.debug(String.format("查询选择型字段描述，查询对象名: %s, 查询字段: %s, 查询值: %s, 字段描述值: %s",
                         objectName, propertyName, value, desc));
                 return desc;
             }
@@ -862,7 +868,7 @@ public class APIUtil {
 
             if (labelMap.containsKey(value)) {
                 String desc = labelMap.get(value);
-                log.info(String.format("查询选择型字段描述，查询字段: %s, 查询值: %s, 字段描述值: %s",
+                log.debug(String.format("查询选择型字段描述，查询字段: %s, 查询值: %s, 字段描述值: %s",
                         propertyName, value, desc));
                 return desc;
             }
@@ -870,7 +876,7 @@ public class APIUtil {
             labelMap.clear();
         }
 
-        log.info(String.format("查询选择型字段描述，查询字段: %s, 查询值: %s, 查找不到描述值。",
+        log.debug(String.format("查询选择型字段描述，查询字段: %s, 查询值: %s, 查找不到描述值。",
                 propertyName, value));
 
         return "";
@@ -895,7 +901,7 @@ public class APIUtil {
             for (Map.Entry<Integer, String> entrySet : labelMap.entrySet()) {
                 if (entrySet.getValue().trim().equals(label.trim())) {
                     int value = entrySet.getKey();
-                    log.info(String.format("查询选择型字段值，查询字段: %s, 查询描述: %s, 字段值: %s",
+                    log.debug(String.format("查询选择型字段值，查询字段: %s, 查询描述: %s, 字段值: %s",
                             propertyName, label, value));
                     return value;
                 }
@@ -938,7 +944,7 @@ public class APIUtil {
             default:
                 break;
         }
-        log.info(String.format("查找标准对象选择型字段描述值，查找url: %s", url));
+        log.debug(String.format("查找标准对象选择型字段描述值，查找url: %s", url));
         return separateItemsLabelsFromObjectDescription(httpClient, version, url, itemType);
     }
 
@@ -957,7 +963,7 @@ public class APIUtil {
             throws IOException {
 
         String url = String.format(CUSTOMIZE_OBJECT_DESCRIBE_URI, belongId);
-        log.info(String.format("查找自定义对象选择型字段描述值，查找url: %s", url));
+        log.debug(String.format("查找自定义对象选择型字段描述值，查找url: %s", url));
 
         return separateItemsLabelsFromObjectDescription(httpClient, APIVersion.V1, url, itemType);
     }
@@ -1096,7 +1102,7 @@ public class APIUtil {
             } else {
                 JSONObject resultObject = queryObject.getJSONObject(dataKey);
 
-                log.info(String.format("查询url: %s，查询结果: %s", URLDecoder.decode(url, CharEncoding.UTF_8), resultObject));
+                log.debug(String.format("查询url: %s，查询结果: %s", URLDecoder.decode(url, CharEncoding.UTF_8), resultObject));
                 return resultObject;
 
             }
@@ -1135,7 +1141,7 @@ public class APIUtil {
                 log.error(msg);
             } else {
                 jsonObject = JSONObject.parseObject(result);
-                log.info(String.format("根据SQL查询: %s，查询结果: %s", sql, result));
+                log.debug(String.format("根据SQL查询: %s，查询结果: %s", sql, result));
             }
 
             return jsonObject;
@@ -1182,7 +1188,7 @@ public class APIUtil {
                 log.error(msg);
             } else {
                 jsonObject = JSONObject.parseObject(result);
-                log.info(String.format("根据SQL查询: %s，查询结果: %s", sql, result));
+                log.debug(String.format("根据SQL查询: %s，查询结果: %s", sql, result));
             }
 
             return jsonObject;
@@ -1232,7 +1238,7 @@ public class APIUtil {
                 log.error(msg);
             } else {
                 jsonObject = JSONObject.parseObject(result);
-                log.info(String.format("根据id查询: %s，查询结果: %s", url, result));
+                log.debug(String.format("根据id查询: %s，查询结果: %s", url, result));
             }
 
             return jsonObject;
@@ -1287,7 +1293,7 @@ public class APIUtil {
                 log.error(msg);
             } else {
                 jsonObject = JSONObject.parseObject(result);
-                log.info(String.format("根据id查询: %s，查询结果: %s", url, result));
+                log.debug(String.format("根据id查询: %s，查询结果: %s", url, result));
             }
 
             return jsonObject;
@@ -1335,7 +1341,7 @@ public class APIUtil {
         }
 
         if (returnObject != null) {
-            log.info(String.format("根据SQL: %s 查询单条记录结果: %s", sql, returnObject.toString()));
+            log.debug(String.format("根据SQL: %s 查询单条记录结果: %s", sql, returnObject.toString()));
         } else {
             log.warn(String.format("根据SQL: %s 查询单条记录结果: %s", sql, "查找不到结果"));
         }
@@ -1381,7 +1387,7 @@ public class APIUtil {
             log.error(msg);
         } else {
             jsonObject = JSONObject.parseObject(result);
-            log.info(String.format("查询单个对象查询: %s，查询结果: %s", uri, result));
+            log.debug(String.format("查询单个对象查询: %s，查询结果: %s", uri, result));
         }
 
         return jsonObject;
@@ -1425,7 +1431,7 @@ public class APIUtil {
             log.error(msg);
         } else {
             jsonObject = JSONObject.parseObject(result);
-            log.info(String.format("查询单个对象查询: %s，查询结果: %s", uri, result));
+            log.debug(String.format("查询单个对象查询: %s，查询结果: %s", uri, result));
         }
 
         return jsonObject;
@@ -1463,7 +1469,7 @@ public class APIUtil {
             //先查询总数量
             String soql = String.format("%s limit %s, %s", sql, start, PAGE_SIZE);
 
-            log.info(String.format("分页查询记录，查询SQL: %s", soql));
+            log.debug(String.format("分页查询记录，查询SQL: %s", soql));
 
             commonData.putFormData("q", soql);
             String result = commonHttpClient.performRequest(commonData);
@@ -1496,7 +1502,7 @@ public class APIUtil {
             String urlParam = String.format("%s limit %s, %s", sql, start, PAGE_SIZE);
             String url = String.format(COMMON_QUERY_URI_V2, URLEncoder.encode(urlParam, CharEncoding.UTF_8));
 
-            log.info(String.format("分页查询记录，查询路径: %s", URLDecoder.decode(url, CharEncoding.UTF_8)));
+            log.debug(String.format("分页查询记录，查询路径: %s", URLDecoder.decode(url, CharEncoding.UTF_8)));
 
             commonData.setCallString(url);
             String result = commonHttpClient.performRequest(commonData);
@@ -1560,7 +1566,7 @@ public class APIUtil {
             //先查询总数量
             String soql = String.format("%s limit %s, %s", sql, start, PAGE_SIZE);
 
-            log.info(String.format("分页查询记录，查询SQL: %s", soql));
+            log.debug(String.format("分页查询记录，查询SQL: %s", soql));
 
             commonData.putFormData("q", soql);
             String result = commonHttpClient.performRequest(commonData);
@@ -1593,7 +1599,7 @@ public class APIUtil {
             String urlParam = String.format("%s limit %s, %s", sql, start, PAGE_SIZE);
             String url = String.format(COMMON_QUERY_URI_V2, URLEncoder.encode(urlParam, CharEncoding.UTF_8));
 
-            log.info(String.format("分页查询记录，查询路径: %s", URLDecoder.decode(url, CharEncoding.UTF_8)));
+            log.debug(String.format("分页查询记录，查询路径: %s", URLDecoder.decode(url, CharEncoding.UTF_8)));
 
             commonData.setCallString(url);
             String result = commonHttpClient.performRequest(commonData);
@@ -1698,7 +1704,7 @@ public class APIUtil {
 
         commonData.setCallString(url);
 
-        log.info(String.format("更新对象url: %s", url));
+        log.debug(String.format("更新对象url: %s", url));
 
         commonData.setBody(jsonString);
 
@@ -1707,7 +1713,7 @@ public class APIUtil {
         if (msg.contains(ERROR_CODE)) {
             log.error(String.format("更新对象错误: %s，更新内容: %s", msg, jsonString));
         } else {
-            log.info(String.format("更新对象结果: %s，更新内容: %s", msg, jsonString));
+            log.debug(String.format("更新对象结果: %s，更新内容: %s", msg, jsonString));
         }
 
         return msg;
@@ -1739,7 +1745,7 @@ public class APIUtil {
 
         commonData.setCallString(url);
 
-        log.info(String.format("更新对象url: %s", url));
+        log.debug(String.format("更新对象url: %s", url));
 
         commonData.setBody(jsonString);
 
@@ -1748,7 +1754,7 @@ public class APIUtil {
         if (msg.contains(ERROR_CODE)) {
             log.error(String.format("更新对象错误: %s，更新内容: %s", msg, jsonString));
         } else {
-            log.info(String.format("更新对象结果: %s，更新内容: %s", msg, jsonString));
+            log.debug(String.format("更新对象结果: %s，更新内容: %s", msg, jsonString));
         }
 
         return msg;
@@ -1789,7 +1795,7 @@ public class APIUtil {
 
         if (msgObject.containsKey("code") && msgObject.containsKey("msg")) {
             if (APIUtil.getInt(APIUtil.getObjectAttribute(msgObject, "code")) == 200) {
-                log.info(String.format("更新对象结果: %s，更新url: %s, 更新内容: %s",
+                log.debug(String.format("更新对象结果: %s，更新url: %s, 更新内容: %s",
                         APIUtil.getObjectAttribute(msgObject, "msg"), url, dataObject.toString()));
             } else {
                 log.error(String.format("更新对象错误: %s，更新url: %s, 更新内容: %s",
@@ -1838,7 +1844,7 @@ public class APIUtil {
 
         if (msgObject.containsKey("code") && msgObject.containsKey("msg")) {
             if (APIUtil.getInt(APIUtil.getObjectAttribute(msgObject, "code")) == 200) {
-                log.info(String.format("更新对象结果: %s，更新url: %s, 更新内容: %s",
+                log.debug(String.format("更新对象结果: %s，更新url: %s, 更新内容: %s",
                         APIUtil.getObjectAttribute(msgObject, "msg"), url, dataObject.toString()));
             } else {
                 log.error(String.format("更新对象错误: %s，更新url: %s, 更新内容: %s",
@@ -1875,7 +1881,7 @@ public class APIUtil {
                 String.format(COMMON_OBJECT_CREATE_URI, "customize") :
                 String.format(COMMON_OBJECT_CREATE_URI, objName);
 
-        log.info(String.format("新建对象url: %s", url));
+        log.debug(String.format("新建对象url: %s", url));
         commonData.setBody(jsonString);
         commonData.setCallString(url);
         String msg = commonHttpClient.performRequest(commonData);
@@ -1883,7 +1889,7 @@ public class APIUtil {
         if (msg.contains(ERROR_CODE)) {
             log.error(String.format("新建自定义对象错误: %s，新建参数: %s", msg, jsonString));
         } else {
-            log.info(String.format("新建自定义对象结果: %s，新建参数: %s", msg, jsonString));
+            log.debug(String.format("新建自定义对象结果: %s，新建参数: %s", msg, jsonString));
         }
 
         return msg;
@@ -1912,7 +1918,7 @@ public class APIUtil {
                 String.format(COMMON_OBJECT_CREATE_URI, "customize") :
                 String.format(COMMON_OBJECT_CREATE_URI, objName);
 
-        log.info(String.format("新建对象url: %s", url));
+        log.debug(String.format("新建对象url: %s", url));
         commonData.setBody(jsonString);
         commonData.setCallString(url);
         String msg = commonHttpClient.performRequest(commonData);
@@ -1920,7 +1926,7 @@ public class APIUtil {
         if (msg.contains(ERROR_CODE)) {
             log.error(String.format("新建自定义对象错误: %s，新建参数: %s", msg, jsonString));
         } else {
-            log.info(String.format("新建自定义对象结果: %s，新建参数: %s", msg, jsonString));
+            log.debug(String.format("新建自定义对象结果: %s，新建参数: %s", msg, jsonString));
         }
 
         return msg;
@@ -2039,7 +2045,7 @@ public class APIUtil {
 
         if (msgObject.containsKey("code") && msgObject.containsKey("msg")) {
             if (APIUtil.getInt(APIUtil.getObjectAttribute(msgObject, "code")) == 200) {
-                log.info(String.format("创建对象结果: %s，创建url: %s, 创建内容: %s",
+                log.debug(String.format("创建对象结果: %s，创建url: %s, 创建内容: %s",
                         APIUtil.getObjectAttribute(msgObject, "msg"), url, dataObject.toString()));
             } else {
                 log.error(String.format("创建对象错误: %s，创建url: %s, 创建内容: %s",
@@ -2086,7 +2092,7 @@ public class APIUtil {
 
         if (msgObject.containsKey("code") && msgObject.containsKey("msg")) {
             if (APIUtil.getInt(APIUtil.getObjectAttribute(msgObject, "code")) == 200) {
-                log.info(String.format("创建对象结果: %s，创建url: %s, 创建内容: %s",
+                log.debug(String.format("创建对象结果: %s，创建url: %s, 创建内容: %s",
                         APIUtil.getObjectAttribute(msgObject, "msg"), url, dataObject.toString()));
             } else {
                 log.error(String.format("创建对象错误: %s，创建url: %s, 创建内容: %s",
@@ -2172,7 +2178,7 @@ public class APIUtil {
 
         if (msgObject.containsKey("code") && msgObject.containsKey("msg")) {
             if (APIUtil.getInt(APIUtil.getObjectAttribute(msgObject, "code")) == 200) {
-                log.info(String.format("删除对象结果: %s，删除url: %s",
+                log.debug(String.format("删除对象结果: %s，删除url: %s",
                         APIUtil.getObjectAttribute(msgObject, "msg"), url));
             } else {
                 log.error(String.format("删除对象错误: %s，删除url: %s",
@@ -2214,7 +2220,7 @@ public class APIUtil {
 
         if (msgObject.containsKey("code") && msgObject.containsKey("msg")) {
             if (APIUtil.getInt(APIUtil.getObjectAttribute(msgObject, "code")) == 200) {
-                log.info(String.format("删除对象结果: %s，删除url: %s",
+                log.debug(String.format("删除对象结果: %s，删除url: %s",
                         APIUtil.getObjectAttribute(msgObject, "msg"), url));
             } else {
                 log.error(String.format("删除对象错误: %s，删除url: %s",
@@ -2291,7 +2297,7 @@ public class APIUtil {
                 String.format(COMMON_OBJECT_DELETE_URI, objName) :
                 String.format(COMMON_OBJECT_DELETE_URI, "customize");
 
-        log.info(String.format("删除对象url：%s", url));
+        log.debug(String.format("删除对象url：%s", url));
 
         commonData.setCall_type(HTTP_TYPE_POST);
         commonData.setCallString(url);
@@ -2302,7 +2308,7 @@ public class APIUtil {
         if (msg.contains(ERROR_CODE)) {
             log.error(String.format("删除对象错误: %s，对象名称: %s，对象id: %s", msg, objName, id));
         } else {
-            log.info(String.format("删除对象结果: %s，对象名称: %s，对象id: %s", msg, objName, id));
+            log.debug(String.format("删除对象结果: %s，对象名称: %s，对象id: %s", msg, objName, id));
         }
 
         return msg;
@@ -2330,7 +2336,7 @@ public class APIUtil {
                 String.format(COMMON_OBJECT_DELETE_URI, objName) :
                 String.format(COMMON_OBJECT_DELETE_URI, "customize");
 
-        log.info(String.format("删除对象url：%s", url));
+        log.debug(String.format("删除对象url：%s", url));
 
         commonData.setCall_type(HTTP_TYPE_POST);
         commonData.setCallString(url);
@@ -2341,7 +2347,7 @@ public class APIUtil {
         if (msg.contains(ERROR_CODE)) {
             log.error(String.format("删除对象错误: %s，对象名称: %s，对象id: %s", msg, objName, id));
         } else {
-            log.info(String.format("删除对象结果: %s，对象名称: %s，对象id: %s", msg, objName, id));
+            log.debug(String.format("删除对象结果: %s，对象名称: %s，对象id: %s", msg, objName, id));
         }
 
         return msg;
@@ -2424,7 +2430,7 @@ public class APIUtil {
 
             if (labelMap.containsKey(value)) {
                 String desc = labelMap.get(value);
-                log.info(String.format("查询选择型字段描述，查询对象名: %s, 查询字段: %s, 查询值: %s, 字段描述值: %s",
+                log.debug(String.format("查询选择型字段描述，查询对象名: %s, 查询字段: %s, 查询值: %s, 字段描述值: %s",
                         objectName, propertyName, value, desc));
                 return desc;
             }
@@ -2469,7 +2475,7 @@ public class APIUtil {
                 break;
         }
 
-        log.info(String.format("查找标准对象选择型字段描述值，查找url: %s", url));
+        log.debug(String.format("查找标准对象选择型字段描述值，查找url: %s", url));
 
         return separateItemsLabelsFromObjectDescription(commonHttpClient, version, url, itemType);
 
@@ -2490,7 +2496,7 @@ public class APIUtil {
             throws IOException {
 
         String url = String.format(COMMON_CUSTOMIZE_OBJECT_DESCRIBE_URI, belongId);
-        log.info(String.format("查找自定义对象选择型字段描述值，查找url: %s", url));
+        log.debug(String.format("查找自定义对象选择型字段描述值，查找url: %s", url));
 
         return separateItemsLabelsFromObjectDescription(commonHttpClient, APIVersion.V1, url, itemType);
 
@@ -2701,9 +2707,8 @@ public class APIUtil {
     }
 
     /**
-     *
-     * @param object    操作的对象，可通过对象查询接口获取objectname
-     * @param operation 执行的操作，目前支持：insert,update,delete,query
+     * @param object      操作的对象，可通过对象查询接口获取objectname
+     * @param operation   执行的操作，目前支持：insert,update,delete,query
      * @param accessToken
      */
     public static JSONObject createAsyncJob(String object,
@@ -2725,13 +2730,13 @@ public class APIUtil {
         commonData.putHeader("Authorization", accessToken);
         commonData.setCall_type(HTTP_TYPE_POST);
         commonData.setBody(dataParam.toString());
-        log.info("创建异步作业参数=" + dataParam.toString());
+        log.debug("创建异步作业参数=" + dataParam.toString());
 
         commonData.setCallString(CREATE_ASYNC_JOB_URI_V2);
         String createJobResult = commonHttpClient.performRequest(commonData);
-        log.info("创建异步作业createJobResult=" + createJobResult);
+        log.debug("创建异步作业createJobResult=" + createJobResult);
         createJobResultJson = JSONObject.parseObject(createJobResult);
-        log.info("创建异步作业createJobResultJson=" + createJobResultJson);
+        log.debug("创建异步作业createJobResultJson=" + createJobResultJson);
         return createJobResultJson;
     }
 
@@ -2747,13 +2752,13 @@ public class APIUtil {
         commonData.putHeader("Authorization", accessToken);
         commonData.setCall_type(HTTP_TYPE_PATCH);
         commonData.setBody(dataParam.toString());
-        log.info("关闭异步作业参数=" + dataParam.toString());
+        log.debug("关闭异步作业参数=" + dataParam.toString());
         String callString = String.format(CLOSE_ASYNC_JOB_URI_V2, jobId);
         commonData.setCallString(callString);
         String closeJobResult = commonHttpClient.performRequest(commonData);
-        log.info("关闭异步作业closeJobResult" + closeJobResult);
+        log.debug("关闭异步作业closeJobResult" + closeJobResult);
         closeJobResultJson = JSONObject.parseObject(closeJobResult);
-        log.info("创建异步作业closeJobResultJson=" + closeJobResultJson);
+        log.debug("创建异步作业closeJobResultJson=" + closeJobResultJson);
         return closeJobResultJson;
     }
 
@@ -2770,12 +2775,12 @@ public class APIUtil {
         commonData.putHeader("Authorization", accessToken);
         commonData.setCall_type(HTTP_TYPE_POST);
         commonData.setBody(dataParam.toString());
-        log.info("创建异步批量任务参数=" + dataParam.toString());
+        log.debug("创建异步批量任务参数=" + dataParam.toString());
         commonData.setCallString(CREATE_ASYNC_BATCH_URI_V2);
         String batchTaskResult = commonHttpClient.performRequest(commonData);
-        log.info("创建异步任务批量返回batchTaskResult=" + batchTaskResult);
+        log.debug("创建异步任务批量返回batchTaskResult=" + batchTaskResult);
         createBatchTaskResultJson = JSONObject.parseObject(batchTaskResult);
-        log.info("创建异步作业createBatchTaskResultJson=" + createBatchTaskResultJson);
+        log.debug("创建异步作业createBatchTaskResultJson=" + createBatchTaskResultJson);
         return createBatchTaskResultJson;
     }
 
