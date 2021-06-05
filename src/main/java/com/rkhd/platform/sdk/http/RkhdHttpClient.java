@@ -60,7 +60,6 @@ public class RkhdHttpClient {
                     } else {
                         log.error(jsonObject.toString());
                     }
-                    System.exit(1);
                 }
             } else {
                 log.error("can not get the accessToken,please check your config");

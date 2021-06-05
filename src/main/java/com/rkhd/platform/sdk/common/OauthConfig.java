@@ -33,16 +33,15 @@ public class OauthConfig {
                 } else {
                     log.error("please config oauthConfig.properties in the resources directory");
                     log.error("Example:\n");
-                    log.error("userName=");
-                    log.error("password=");
-                    log.error("securityCode=");
-                    log.error("clientId=");
-                    log.error("clientSecret=");
-                    log.error("domain=");
-                    log.error("modelJarPath=");
-                    log.error("socketTimeout=");
-                    log.error("connectionTimeout=");
-                    System.exit(1);
+                    log.error("userName=xxx");
+                    log.error("password=xxx");
+                    log.error("securityCode=xxx");
+                    log.error("clientId=xxx");
+                    log.error("clientSecret=xxx");
+                    log.error("domain=xxx");
+                    log.error("modelJarPath=xxx");
+                    log.error("socketTimeout=xxx");
+                    log.error("connectionTimeout=xxx");
                 }
             } catch (IOException e1) {
                 e1.printStackTrace();
@@ -62,16 +61,15 @@ public class OauthConfig {
             } else {
                 log.error("please config oauthConfig.properties in the resources directory");
                 log.error("Example:\n");
-                log.error("userName=");
-                log.error("password=");
-                log.error("securityCode=");
-                log.error("clientId=");
-                log.error("clientSecret=");
-                log.error("domain=");
-                log.error("modelJarPath=");
-                log.error("socketTimeout=");
-                log.error("connectionTimeout=");
-                System.exit(1);
+                log.error("userName=xxx");
+                log.error("password=xxx");
+                log.error("securityCode=xxx");
+                log.error("clientId=xxx");
+                log.error("clientSecret=xxx");
+                log.error("domain=xxx");
+                log.error("modelJarPath=xxx");
+                log.error("socketTimeout=xxx");
+                log.error("connectionTimeout=xxx");
             }
         } catch (IOException e1) {
             e1.printStackTrace();
